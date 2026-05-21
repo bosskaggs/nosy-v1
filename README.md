@@ -1,79 +1,87 @@
-# Nosy v2  
-A lightweight Python tool for detecting new devices on your LAN and sending instant alerts via Pushover.
+# Nosy v1 — Tailscale Presence Watcher
 
-Nosy watches your network for new or unexpected devices.  
-It’s simple, fast, and reliable — no agents, no daemons, no cloud accounts, no subscriptions.
+Nosy v1 is a lightweight daemon that monitors your Tailscale network and sends
+Pushover notifications when devices appear, disappear, or change state.
 
-Originally built to monitor a Tailscale fleet, Nosy works with **any** device on your network.
-
----
-
-## 🚀 Features
-- Detects new devices via ARP scanning  
-- Sends instant alerts via Pushover  
-- Tracks first‑seen timestamps  
-- Optional device name overrides  
-- Runs manually or as a systemd service  
-- Works on VMs, Raspberry Pi, or bare metal  
-- Zero external dependencies beyond Python + scapy  
+It runs as a systemd service and polls `tailscale status --json` every 30 seconds.
 
 ---
 
-## 📦 Minimum Requirements
-- Python 3.8+  
-- pip3  
-- scapy  
-- requests  
-- A network interface (wired or WiFi)
+## Features
+
+- Detects when a Tailscale node comes online
+- Detects when a node goes offline
+- Detects new nodes joining the tailnet
+- Detects nodes removed from the tailnet
+- Sends alerts via a simple `notify.sh` script (Pushover by default)
+- Persists state to `/opt/nosyneighbour/tailscale_state.json`
+- Runs as a systemd service for reliability
 
 ---
 
-## 🧪 Tested On
-- Ubuntu Server (Proxmox VM)  
-- Debian 12  
-- Raspberry Pi OS  
-- Windows 10/11 (WSL)  
-- Tailscale networks  
-- Standard home LANs  
+## Installation
+
+### 1. Copy files
+
+sudo cp tailscale-watcher.py /usr/local/bin/
+sudo chmod +x /usr/local/bin/tailscale-watcher.py
+
+
+### 2. Create the working directory
+
+sudo mkdir -p /opt/nosyneighbour
+sudo cp opt/tailscale_state.json.example /opt/nosyneighbour/tailscale_state.json
+
+
+### 3. Configure notifications
+
+Copy the example:
+
+udo cp notify.sh.example /opt/nosyneighbour/notify.sh
+sudo chmod +x /opt/nosyneighbour/notify.sh
+
+
+Edit it and insert your Pushover token + user key.
 
 ---
 
-## 🔔 Why Pushover?
-Pushover is used because it is:
+## Systemd Service
 
-- Fast  
-- Reliable  
-- Cross‑platform  
-- Works even when your phone is on silent  
-- Has a simple API  
-- Doesn’t require phone numbers or email  
+Install the service:
 
-### But Pushover is optional  
-Nosy’s notification system is modular.  
-You can replace it with:
+sudo cp tailscale-watcher.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable tailscale-watcher
+sudo systemctl start tailscale-watcher
 
-- Discord  
-- Slack  
-- Telegram  
-- Email  
-- SMS  
-- Webhooks  
-- Home Assistant  
-- Anything with an API  
+Check status:
 
-Modify the `notify()` function in `nosy.py`.
 
 ---
 
-## 🛠 Installation
+## Logs
 
-### Install dependencies
-```bash
-sudo apt update
-sudo apt install -y python3 python3-pip
-pip install scapy requests
-sudo pip3 install scapy requests
-#Running Manually sudo python3 nosy.py
-#Running as a systemd Service #sudo mkdir -p /opt/nosy
-#sudo cp * /opt/nosy/
-#sudo chown -R "user":"user" /opt/nosy
+
+---
+
+## Directory Layout
+
+/usr/local/bin/tailscale-watcher.py
+/opt/nosyneighbour/notify.sh
+/opt/nosyneighbour/tailscale_state.json
+/etc/systemd/system/tailscale-watcher.service
+
+
+---
+
+## Requirements
+
+- Python 3
+- Tailscale installed and authenticated
+- Pushover account (or modify notify.sh for another service)
+
+---
+
+## License
+
+MIT (or whatever you prefer)
